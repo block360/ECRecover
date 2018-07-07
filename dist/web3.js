@@ -35965,8 +35965,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
         };
 
         Accounts.prototype.sign = function sign(data, privateKey) {
-          var hash = this.hashMessage(data);
-          var signature = Account.sign(hash, privateKey);
+          // var hash = this.hashMessage(data);
+          var signature = Account.sign(data, privateKey);
           var vrs = Account.decodeSignature(signature);
           return {
             message: data,

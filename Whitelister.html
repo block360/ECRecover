@@ -5,6 +5,7 @@
     <title>Address Whitelist</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
     <script type="text/javascript" src="dist/web3.min.js"></script>
+    <script type="text/javascript" src="dist/ethereumjs-util.js"></script>
   </head>
   <body>
     <div class="container ">
@@ -31,48 +32,67 @@
       </div>
     </div>
     <script>
-    var web3 = new Web3(new Web3.providers.HttpProvider("https://rinkeby.infura.io/uhyGfBKKeV2k11JDkoQM"));
+    var web3 = new Web3(new Web3.providers.HttpProvider("http://127.0.0.1:9545/"));
     function signAddress() {
+
       var privateKey = document.getElementById('privateKey').value
       var publicAddress = document.getElementById('publicAddress').value
-      var contractAddress = "0x602454de8fFFAE1aD6BDcD58F2A6e98f92bC63EC"
+      var contractAddress = "0x345ca3e014aaf5dca488057592ee47305d9b3e10"
       var contractABI = [
-      {
-        "constant": false,
-        "inputs": [
-          {
-            "name": "hash",
-            "type": "bytes32"
-          },
-          {
-            "name": "v",
-            "type": "uint8"
-          },
-          {
-            "name": "r",
-            "type": "bytes32"
-          },
-          {
-            "name": "s",
-            "type": "bytes32"
-          }
-        ],
-        "name": "releaseEQUITokens",
-        "outputs": [],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "function"
+     {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "dataframe",
+          "type": "bytes"
+        },
+        {
+          "name": "v",
+          "type": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32"
+        }
+      ],
+      "name": "buyTokens",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
     }
     ];
+      if(!(web3.utils.isAddress(publicAddress))){
+        alert("Wrong Address");
+        return;
+      }
+      if(privateKey.length == 0){
+        alert("Wrong Private Key");
+        return;
+      }
 
-      var {messageHash,v,r,s} = web3.eth.accounts.sign(publicAddress, privateKey)
+      var checksumAddress = web3.utils.toChecksumAddress(publicAddress);
+      var payload = web3.utils.sha3(checksumAddress);
+      var {v,r,s} = EthJS.Util.ecsign(EthJS.Util.toBuffer(payload),EthJS.Util.toBuffer(privateKey));
+      var rHex = EthJS.Util.bufferToHex(r);
+      var sHex = EthJS.Util.bufferToHex(s);
+      var v = Number(v);
+
+      console.log(checksumAddress,v,rHex,sHex );
 
       var ContractInstance = new web3.eth.Contract(contractABI, contractAddress)
-      console.log(ContractInstance)
 
-      var data = ContractInstance.methods.releaseEQUITokens(messageHash,Number(v),r,s).encodeABI()
-      var res = messageHash + ' , ' + v + ' , ' + r + ' , ' + s
-      console.log(res)
+      var data = ContractInstance.methods.buyTokens(checksumAddress,v,rHex,sHex).encodeABI()
+      var res = payload + ' , ' + v + ' , ' + r + ' , ' + s
 
       document.getElementById('data').value = data
     }
